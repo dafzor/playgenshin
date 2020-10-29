@@ -3,19 +3,18 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
+using bnetlauncher.Utils;
 
 namespace playgenshin
 {
     class Program
     {
-        static void Main(string[] args)
+        static void LaunchGenshin()
         {
-            var regkey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"Software\launcher", false);
-            var launcher_path = Path.Combine((string)regkey.GetValue("InstPath"), "launcher.exe");
-
-            var proc = Process.Start(launcher_path);
+            var proc = Process.Start(GenshinLauncherPath);
             var button_color = Color.FromArgb(255, 255, 203, 11);
 
             while (proc.MainWindowHandle == IntPtr.Zero)
@@ -24,7 +23,7 @@ namespace playgenshin
             }
 
             var button_location = Point.Empty;
-            
+
             for (int i = 0; i < 3; i++)
             {
                 button_location = FindButtonByColor(proc, button_color);
@@ -35,14 +34,80 @@ namespace playgenshin
                 }
                 Thread.Sleep(100);
             }
-
-            SetForegroundWindow(proc.MainWindowHandle);
+            WinApi.NativeMethods.SetForegroundWindow(proc.MainWindowHandle);
             ClickOnWindow(proc.MainWindowHandle, button_location);
             Thread.Sleep(1000);
             proc.CloseMainWindow();
         }
 
-        public static Point FindButtonByColor(Process proc, Color button_color)
+
+        static string GenshinLauncherPath
+        {
+            get
+            {
+                var regkey = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"Software\launcher", false);
+                return Path.Combine((string)regkey.GetValue("InstPath"), "launcher.exe");
+            }
+        }
+
+        static bool IsElevated
+        {
+            get
+            {
+                return WindowsIdentity.GetCurrent().Owner
+                  .IsWellKnown(WellKnownSidType.BuiltinAdministratorsSid);
+            }
+        }
+
+
+        static void Main(string[] args)
+        {
+            var start_date = DateTime.Now;
+            if (IsElevated)
+            {
+                if (Tasker.Exists(Application.ProductName))
+                {
+                    LaunchGenshin();
+                }
+                else
+                {
+                    Tasker.Create(Application.ProductName, Application.ExecutablePath, true);
+                }
+                return;
+            }
+            else
+            {
+                if (!Tasker.Exists(Application.ProductName))
+                {
+                   // create task
+                    var process_info = new ProcessStartInfo();
+                    process_info.Verb = "runas";
+                    process_info.FileName = Application.ExecutablePath;
+                    Process.Start(process_info);
+                }
+                Tasker.Run(Application.ProductName);
+            }
+
+            Process genshin = null;
+
+            var retry = 100;
+            while (retry > 0)
+            {
+                var processes = Process.GetProcessesByName("GenshinImpact");
+
+                if (processes.Length > 0)
+                {
+                    genshin = processes[0];
+                    break;
+                }
+                retry -= 1;
+                Thread.Sleep(200);
+            }
+
+            genshin.WaitForExit();
+        }
+
+        static Point FindButtonByColor(Process proc, Color button_color)
         {
             var bmp = CaptureWindow(proc);
             bmp.Save(Path.Combine(Path.GetTempPath(), Application.ProductName + "_window_capture.bmp"));
@@ -60,15 +125,7 @@ namespace playgenshin
             }
             return Point.Empty;
         }
-        internal struct MouseInput
-        {
-            public int X;
-            public int Y;
-            public uint MouseData;
-            public uint Flags;
-            public uint Time;
-            public IntPtr ExtraInfo;
-        }
+
 
         [System.Runtime.InteropServices.DllImport("user32.dll")]
         private static extern bool SetProcessDPIAware();
@@ -166,8 +223,5 @@ namespace playgenshin
             /// return mouse 
             Cursor.Position = oldPos;
         }
-
-        [DllImport("user32.dll")]
-        public static extern bool SetForegroundWindow(IntPtr hWnd);
     }
 }
