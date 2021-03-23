@@ -18,10 +18,10 @@
 // Contact:
 // daf <daf@madalien.com>
 
+using Microsoft.Win32.TaskScheduler;
 using System;
 using System.Diagnostics;
 using System.Reflection;
-using Microsoft.Win32.TaskScheduler;
 
 namespace bnetlauncher.Utils
 {
@@ -62,10 +62,11 @@ namespace bnetlauncher.Utils
 
             td.Principal.LogonType = TaskLogonType.InteractiveToken;
 
-            if (elevated) {
+            if (elevated)
+            {
                 td.Principal.RunLevel = TaskRunLevel.Highest;
             }
-            
+
             td.RegistrationInfo.Description = $"{VersionInfo.FileMajorPart}.{VersionInfo.FileMinorPart}";
 
             td.Settings.AllowDemandStart = true;

@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Diagnostics;
 using System.Drawing;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -57,7 +56,7 @@ namespace bnetlauncher.Utils
             public static extern int GetWindowTextLength(IntPtr hWnd);
 
             [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-            public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString,int nMaxCount);
+            public static extern int GetWindowText(IntPtr hWnd, StringBuilder lpString, int nMaxCount);
 
             [DllImport("User32.dll")]
             public static extern int SetForegroundWindow(IntPtr point);
@@ -176,10 +175,12 @@ namespace bnetlauncher.Utils
             using (Graphics graphics = Graphics.FromImage(bmp))
             {
                 IntPtr hDC = graphics.GetHdc();
-                try {
+                try
+                {
                     NativeMethods.PrintWindow(handle, hDC, (uint)0x00000002);
                 }
-                finally {
+                finally
+                {
                     graphics.ReleaseHdc(hDC);
                 }
             }

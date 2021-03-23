@@ -19,11 +19,11 @@
 // daf <daf@madalien.com>
 
 using System;
-using System.IO;
 using System.Diagnostics;
+using System.Globalization;
+using System.IO;
 using System.Management;
 using System.Threading;
-using System.Globalization;
 
 namespace bnetlauncher.Utils
 {
@@ -154,7 +154,7 @@ namespace bnetlauncher.Utils
                 while (game_process_id == 0 && stopwatch_timeout.Elapsed.TotalSeconds < timeout)
                 {
                     // Avoids spamming the log with looking for process messages
-                    if ((stopwatch_timeout.ElapsedMilliseconds - (seconds_passed*1000)) > 0)
+                    if ((stopwatch_timeout.ElapsedMilliseconds - (seconds_passed * 1000)) > 0)
                     {
                         Logger.Information($"Searching for process '{name}' for '{timeout - seconds_passed}' seconds.");
                         seconds_passed++;

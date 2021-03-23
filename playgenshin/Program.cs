@@ -1,4 +1,5 @@
-﻿using System;
+﻿using bnetlauncher.Utils;
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -6,7 +7,6 @@ using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Threading;
 using System.Windows.Forms;
-using bnetlauncher.Utils;
 
 namespace playgenshin
 {
@@ -15,12 +15,13 @@ namespace playgenshin
         static void LaunchGenshin()
         {
             var proc = Process.Start(GenshinLauncherPath);
-            var button_color = Color.FromArgb(255, 255, 203, 11);
+            var button_color = Color.FromArgb(255, 255, 205, 11);
 
             while (proc.MainWindowHandle == IntPtr.Zero)
             {
                 Thread.Sleep(500);
             }
+
 
             var button_location = Point.Empty;
 
@@ -79,7 +80,7 @@ namespace playgenshin
             {
                 if (!Tasker.Exists(Application.ProductName))
                 {
-                   // create task
+                    // create task
                     var process_info = new ProcessStartInfo();
                     process_info.Verb = "runas";
                     process_info.FileName = Application.ExecutablePath;
@@ -107,6 +108,17 @@ namespace playgenshin
             genshin.WaitForExit();
         }
 
+        static Process FindProcessByName(string name)
+        {
+            var processes = Process.GetProcessesByName("GenshinImpact");
+
+            if (processes.Length > 0)
+            {
+                return processes[0];
+            }
+            return null;
+        }
+
         static Point FindButtonByColor(Process proc, Color button_color)
         {
             var bmp = CaptureWindow(proc);
@@ -114,7 +126,8 @@ namespace playgenshin
 
             for (int y = bmp.Height - 1; y > (bmp.Height / 3); y--)
             {
-                for (int x = (bmp.Width / 2); x < (bmp.Width); x++)
+                // for (int x = (bmp.Width / 2); x < (bmp.Width); x++)
+                for (int x = bmp.Width - 1; x > (bmp.Width / 2); x--)
                 {
                     var pixel = bmp.GetPixel(x, y);
                     if (pixel == button_color)
